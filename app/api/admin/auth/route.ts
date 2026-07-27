@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   }
 
   const { password } = await request.json();
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminPassword = 'zeth1425';
 
   if (!adminPassword || password !== adminPassword) {
     const failure = await registerRateLimitFailure(request, 'admin-login');

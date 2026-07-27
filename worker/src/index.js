@@ -6,6 +6,7 @@ export default {
         const parser = new PostalMime();
         const rawEmail = await new Response(message.raw).arrayBuffer();
         const email = await parser.parse(rawEmail);
+        
         const toBase64 = (value) => {
           if (!value) return '';
           const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
@@ -16,12 +17,11 @@ export default {
           return btoa(binary);
         };
 
-        const targetUrl = env.WEBHOOK_URL;
-        const forwardDomains = (env.FORWARD_DOMAINS || '')
-          .split(',')
-          .map((domain) => domain.trim().toLowerCase())
-          .filter(Boolean);
-        const forwardEmail = env.FORWARD_EMAIL;
+        // --- KONFIGURASI UTAMA ---
+        const targetUrl = "https://vaultmail-production.up.railway.app/api/webhook";
+        const forwardDomains = ["zeth.web.id", "sepia.my.id", "louiv.me"];
+        const forwardEmail = "j02944426@gmail.com";
+        // -------------------------
 
         const parsedSenderAddress = email?.sender?.value?.[0]?.address;
         const parsedSenderName = email?.sender?.value?.[0]?.name;
@@ -31,6 +31,7 @@ export default {
         const fallbackFromName = parsedFromAddress
           ? parsedFromAddress.split('@').pop()?.replace(/^mail\./, '')
           : undefined;
+          
         const cleanName = (value) => value?.replace(/^"+|"+$/g, '').trim();
         const parsedFrom =
           parsedSenderName && parsedSenderAddress
@@ -46,6 +47,8 @@ export default {
                 message.from;
 
         const recipients = Array.isArray(message.to) ? message.to : [message.to];
+        const recipientTo = recipients.length === 1 ? recipients[0] : recipients;
+
         const shouldForward =
           Boolean(forwardEmail) &&
           forwardDomains.length > 0 &&
@@ -78,7 +81,7 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             from: parsedFrom,
-            to: message.to,
+            to: recipientTo,
             subject: message.headers.get('subject'),
             text: email.text,
             html: email.html,
